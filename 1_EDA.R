@@ -1,12 +1,14 @@
-library(gtsummary)
-library(data.table)
-library(lubridate)
-library(stringr)
-library(ggplot2)
-library(openxlsx)
+# Author: Alejandro Santos Mejías
+# Date last update: 2025-04-25
+# Input: Boolean diagnosis datasets
+# Output: Top 20 incident and prevalent dieases
+# Motivational comment: Life is a path full of suffering, you decide what to do with all of it! 
 
-setwd("C:/Santos/VIH/Prueba_push/data7/")
-options(scipen = 999)
+
+rm(list = ls())
+gc()
+
+source("99_paths_and_packages.R")
 
 if(!dir.exists(paste0("output/", format(Sys.Date(),"%Y%m%d")))){dir.create(paste0("output/", format(Sys.Date(),"%Y%m%d")))}
 
@@ -83,7 +85,7 @@ descriptiveAnalysis <- function(diag, label) {
       statistic = list(all_continuous() ~ "{mean} ({sd}) | {median} ({p25}, {p75})"),
       missing = "no"
     ) %>%
-    add_p(test = indice_privación ~ "t.test") %>%
+    add_p(test = indice_privación ~ "t.test", ) %>%
     bold_labels() %>%
     bold_p() %>%
     as_gt() %>% gt::gtsave(path = paste0("output/", format(Sys.Date(),"%Y%m%d")),
@@ -96,6 +98,10 @@ descriptiveAnalysis(bdu[prevalente == T], "prev" )
 # Top 20 prevalent diseases:
 cols <- colnames(diag_bool_prev)
 cols <- cols[-c(1:3)]
+cols <- cols[!unlist(diag_bool_prev[, lapply(.SD, function(x){sum(x) == 0}), .SDcols = cols, by = HIV_infection][, lapply(.SD, any), .SDcols = cols])]
+cols <- c("HIV_infection", cols)
+diag_bool_prev <- diag_bool_prev[, ..cols]
+
 top20 <- data.table(
   ccs = cols,
   n_positive = t(diag_bool_prev[, lapply(.SD, sum), .SDcols = cols, by = "`HIV_infection`"][,-1]),
@@ -114,6 +120,10 @@ fwrite(top20, paste0("output/", format(Sys.Date(),"%Y%m%d"),"/Tabla_prevalencias
 # Top 20 incident diseases:
 cols <- colnames(diag_bool_inc)
 cols <- cols[-c(1:3)]
+cols <- cols[!unlist(diag_bool_inc[, lapply(.SD, function(x){sum(x) == 0}), .SDcols = cols, by = HIV_infection][, lapply(.SD, any), .SDcols = cols])]
+cols <- c("HIV_infection", cols)
+diag_bool_inc <- diag_bool_inc[, ..cols]
+
 top20 <- data.table(
   ccs = cols,
   n_positive = t(diag_bool_inc[, lapply(.SD, sum), .SDcols = cols, by = "`HIV_infection`"][,-1]),

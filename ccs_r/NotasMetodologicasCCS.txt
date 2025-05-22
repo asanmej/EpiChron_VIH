@@ -1,0 +1,3 @@
+- Se han agrupado las enfermedades definitorias de SIDA en un CCS ad hoc "HIV-related diseases" según criterio de Roberto.
+- Se ha cogido la equivalencia en CIE9 de las enfermedades del siguiente documento:
+- Link documento: https://docs.google.com/document/d/1ikk_AkLs-deNeNDRnu7syEfUcBgeNMFN/edit?usp=drive_link&ouid=110389535934203892154&rtpof=true&sd=true

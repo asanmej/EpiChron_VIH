@@ -1,13 +1,3 @@
-library(gtsummary)
-library(data.table)
-library(stringr)
-library(ggplot2)
-library(openxlsx)
-library(psych) # Required for EFA
-library(GPArotation) # Required for factor rotations
-
-setwd("C:/Santos/VIH/Prueba_push/data7/")
-options(scipen = 999)
 
 
 ##############

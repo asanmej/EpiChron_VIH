@@ -1,13 +1,10 @@
-library(gtsummary)
-library(data.table)
-library(lubridate)
-library(stringr)
-library(ggplot2)
-library(openxlsx)
+# Author: Alejandro Santos Mejías
+# Date last update: 2025-04-25
+# Input: First draft bdu, CCS diagnosis and drug dataset
+# Output: Boolean and date diagnosis dataset
+# Motivational comment: Life is a path full of suffering, you decide what to do with all of it! 
 
-
-setwd("C:/Santos/VIH/Prueba_push/data7/")
-options(scipen = 999)
+source("99_paths_and_packages.R", encoding = "UTF-8")
 
 ##############################
 ##### Preprocessing Drugs ####
@@ -96,18 +93,16 @@ ccsFull <- ccsFull[patient_id %in% bdu$patient_id]
 fwrite(ccsFull, file = "intermediate/diagnosis_full_final.csv", encoding = "UTF-8")
 diag_date_prev <- data.table::dcast(data = ccsFull[, .(patient_id, vih_dt, ccs_label, diag_dt)], formula = patient_id + vih_dt ~ ccs_label, value.var = "diag_dt")
 
-# Patients with only one match control, assume they are completely healthy and add those control to the datasets:
-fixUnevenMatching <- function(data = NA, cohort = NA){
-  
-  cohort_missing <- cohort[patient_id %in% data$patient_id & !(control_id %in% data$patient_id), .(control_id, vih_dt)]
-  setnames(cohort_missing, c("patient_id", "vih_dt"))
-  cohort_missing[, vih_dt := as.Date(vih_dt)]
-  data <- rbindlist(list(data, cohort_missing), fill = T)
-  return(data)
-}
+# Add missing patients vih+ and ctl to diagnosis dataset
+t <- cohort[, .(control_id, vih_dt)]
+setnames(t, "control_id", "patient_id")
+missing_patient <- rbindlist(list(t, unique(cohort[, .(patient_id, vih_dt)])))
 
-diag_date_prev <- fixUnevenMatching(data = diag_date_prev, cohort = cohort)
+diag_date_prev <- rbindlist(list(diag_date_prev, missing_patient[!(patient_id %in% diag_date_prev$patient_id)]), fill = T)
+diag_date_prev <- diag_date_prev[patient_id %in% bdu$patient_id]
+diag_date_prev <- unique(diag_date_prev, by = "patient_id")
 fwrite(diag_date_prev, file = "intermediate/diagnosis_date_prevalent_final.csv", encoding = "UTF-8")
+
 diag_bool_prev <- copy(diag_date_prev)
 cols <- colnames(diag_bool_prev)[-c(1,2)]
 diag_bool_prev <- diag_bool_prev[, (cols) := lapply(.SD, function(x){ifelse(is.na(x), 0, 1)}), .SDcols = cols]
@@ -115,8 +110,11 @@ fwrite(diag_bool_prev, file = "intermediate/diagnosis_bool_prevalent_final.csv",
 
 # Incident cases:
 diag_date_inc <- data.table::dcast(data = ccsFull[ymd(vih_dt) <= ymd(diag_dt), .(patient_id, vih_dt, ccs_label, diag_dt)], formula = patient_id + vih_dt ~ ccs_label, value.var = "diag_dt")
-diag_date_inc <-  rbindlist(list(diag_date_inc, diag_date_prev[!(paste0(patient_id, vih_dt) %in% paste0(diag_date_inc$patient_id, diag_date_inc$vih_dt)), .(patient_id, vih_dt)]), fill = T)
-fwrite(diag_date_prev, file = "intermediate/diagnosis_date_incident_final.csv", encoding = "UTF-8")
+diag_date_inc <- rbindlist(list(diag_date_inc, missing_patient[!(patient_id %in% diag_date_inc$patient_id)]), fill = T)
+diag_date_inc <- diag_date_inc[patient_id %in% bdu$patient_id]
+diag_date_inc <- unique(diag_date_inc, by = "patient_id")
+fwrite(diag_date_inc, file = "intermediate/diagnosis_date_incident_final.csv", encoding = "UTF-8")
+
 diag_bool_inc <- copy(diag_date_inc)
 cols <- colnames(diag_bool_inc)[-c(1,2)]
 diag_bool_inc <- diag_bool_inc[, (cols) := lapply(.SD, function(x){ifelse(is.na(x), 0, 1)}), .SDcols = cols]
@@ -125,23 +123,33 @@ fwrite(diag_bool_inc, file = "intermediate/diagnosis_bool_incident_final.csv", e
 # Fix hiv patients without being positive in ccs HIV Infection:
 bdu[patient_id %in% cohort$control_id, vih_bool := F]
 bdu[patient_id %in% cohort$patient_id, vih_bool := T]
+
 diag_bool_prev[patient_id %in% bdu[vih_bool == T, patient_id], HIV_infection := 1]
-diag_bool_prev <- diag_bool_prev[patient_id %in% bdu$patient_id,]
-
 diag_bool_inc[patient_id %in% bdu[vih_bool == T, patient_id], HIV_infection := 1]
-diag_bool_inc <- diag_bool_inc[patient_id %in% bdu$patient_id]
-
 diag_date_prev[patient_id %in% bdu[vih_bool == T, patient_id] & is.na(HIV_infection), HIV_infection := format(vih_dt, "%Y%m%d")]
-diag_date_prev <- diag_date_prev[patient_id %in% bdu$patient_id]
-
 diag_date_inc[patient_id %in% bdu[vih_bool == T, patient_id] & is.na(HIV_infection), HIV_infection := format(vih_dt, "%Y%m%d")]
-diag_date_inc <- diag_date_inc[patient_id %in% bdu$patient_id]
 
 # Set column order and save:
 setcolorder(diag_bool_prev, c("patient_id", "vih_dt", "HIV_infection"))
 setcolorder(diag_bool_inc, c("patient_id", "vih_dt", "HIV_infection"))
 setcolorder(diag_date_prev, c("patient_id", "vih_dt", "HIV_infection"))
 setcolorder(diag_date_inc, c("patient_id", "vih_dt", "HIV_infection"))
+
+# Remove columns with small frequency of cases <10
+cols <- colnames(diag_bool_prev)
+cols <- cols[-c(1:3)]
+cols_prev <- c("patient_id", "vih_dt", "HIV_infection",colnames(diag_bool_prev[, lapply(.SD, sum), .SDcols = cols])[diag_bool_prev[, lapply(.SD, sum), .SDcols = cols] >10])
+
+cols <- colnames(diag_bool_inc)
+cols <- cols[-c(1:3)]
+cols_inc <- c("patient_id", "vih_dt", "HIV_infection", colnames(diag_bool_inc[, lapply(.SD, sum), .SDcols = cols])[diag_bool_inc[, lapply(.SD, sum), .SDcols = cols] >10])
+
+diag_bool_prev <- diag_bool_prev[, ..cols_prev]
+diag_date_prev <- diag_date_prev[, ..cols_prev]
+diag_bool_inc <- diag_bool_inc[, ..cols_inc]
+diag_date_inc <- diag_date_inc[, ..cols_inc]
+
+# Add patient without information in 
 
 fwrite(diag_bool_prev, file = "intermediate/diagnosis_bool_prevalent_final.csv", encoding = "UTF-8")
 fwrite(diag_bool_inc, file = "intermediate/diagnosis_bool_incident_final.csv", encoding = "UTF-8")
