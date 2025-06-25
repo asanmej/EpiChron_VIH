@@ -1,0 +1,16 @@
+"",ML4,ML1,ML3,ML2,ML5,ML6
+Hepatitis,0,0.993,0,0,0,0
+Depression_and_Mood_disorders,0,0,0.879,0,0,0
+Anxiety_disorders,0,0,0.307,0,0,0.376
+Allergic_rhinitis,0,0,0,0.996,0,0
+Miscellaneous_mental_health_disorders,0,0,0,0,0.717,0
+Headache__including_migraine,0,0,0,0,0.515,0
+Hearing_loss_and_other_ear_and_sense_organ_disorders,0,0,0,0,0.391,0
+Adictions,0,0,0,0,0,0.572
+Inflammatory_conditions_of_male_genital_organs,0,0,0,0,0,0.454
+Asthma,0,0,0,0,0,0.331
+Disorders_of_lipid_metabolism,0.627,0,0,0,0,0
+Hypertension,0.729,0,0,0,0,0
+Obesity,0.539,0,0,0,0,0
+Other_male_genital_disorders,0,0,0,0,0,0
+Vision_defects,0,0,0,0,0,0

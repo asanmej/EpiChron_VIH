@@ -1,0 +1,17 @@
+"",ML4,ML3,ML2,ML1
+Adictions,0,0.926,0,0
+Depression_and_Mood_disorders,0.382,0.466,0,0
+Obesity,0,0.341,0.385,0
+Anxiety_disorders,0.412,0.303,0,0
+Hearing_loss_and_other_ear_and_sense_organ_disorders,0,0,1.012,0
+Hepatitis,0,0,0,0.933
+Allergic_rhinitis,0.336,0,0,0
+Asthma,0,0,0,0
+Atopic_dermatitis,0,0,0,0
+Disorders_of_lipid_metabolism,0.699,0,0,0
+Headache__including_migraine,0.528,0,0,0
+Hypertension,0.301,0,0,0
+Menstrual_disorders,0.42,0,0,0
+Miscellaneous_mental_health_disorders,0.353,0,0,0
+Thyroid_disorders,0.343,0,0,0
+Vision_defects,0,0,0,0

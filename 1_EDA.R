@@ -10,9 +10,9 @@ gc()
 
 source("99_paths_and_packages.R")
 
-if(!dir.exists(paste0("output/", format(Sys.Date(),"%Y%m%d")))){dir.create(paste0("output/", format(Sys.Date(),"%Y%m%d")))}
+if(!dir.exists(paste0("output/", format(Sys.Date(),"%Y%m%d")))){dir.create(paste0("output/", format(Sys.Date(),"%Y%m%d")), recursive = TRUE)}
 
-################################
+################################################################TRUE
 ##### Descriptive analysis #####
 ################################
 

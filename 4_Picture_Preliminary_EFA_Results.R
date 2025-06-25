@@ -3,11 +3,11 @@ library(data.table)
 library(plotly)
 library(htmlwidgets)
 
-result_path <- "C:/Santos/VIH/Prueba_push/data7/output/20250311/EFA_results"
+result_path <- "output/20250623/EFA_results/"
 setwd(result_path)
 
 
-for(i in 1:5) {
+for(i in 2:3) {
   if(!dir.exists(paste0("Prev_", i))){dir.create(paste0("Prev_", i))}
   files <- list.files(pattern = paste0(i,"%.*\\.csv$"))  
   

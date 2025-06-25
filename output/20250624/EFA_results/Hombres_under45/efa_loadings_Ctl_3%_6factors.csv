@@ -1,0 +1,14 @@
+"",ML1,ML4,ML5,ML2,ML3,ML6
+Depression_and_Mood_disorders,0,0.991,0,0,0,0
+Atopic_dermatitis,0,0,0.864,0,0,0
+Asthma,0,0,0.414,0,0,0
+Other_male_genital_disorders,0,0,0,0.994,0,0
+Vision_defects,0,0,0,0,0.992,0
+Allergic_rhinitis,0,0,0,0,0,0.49
+Disorders_of_lipid_metabolism,0,0,0,0,0,0.461
+Hypertension,0.454,0,0,0,0,0.382
+Anxiety_disorders,0,0,0,0,0,0
+Headache__including_migraine,0,0,0,0,0,0
+Hearing_loss_and_other_ear_and_sense_organ_disorders,0,0,0,0,0,0
+Inflammatory_conditions_of_male_genital_organs,0,0,0,0,0,0
+Obesity,0.971,0,0,0,0,0

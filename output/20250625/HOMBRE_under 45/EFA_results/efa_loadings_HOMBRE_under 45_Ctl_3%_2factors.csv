@@ -1,0 +1,14 @@
+"",ML2,ML1
+Atopic_dermatitis,-0.019,0.995
+Asthma,0.234,0.374
+Inflammatory_conditions_of_male_genital_organs,0.231,0.27
+Obesity,0.708,0.166
+Other_male_genital_disorders,0.194,0.16
+Allergic_rhinitis,0.23,0.152
+Headache__including_migraine,0.382,0.076
+Vision_defects,0.263,0.041
+Depression_and_Mood_disorders,0.449,0.015
+Anxiety_disorders,0.486,-0.086
+Hearing_loss_and_other_ear_and_sense_organ_disorders,0.273,-0.097
+Disorders_of_lipid_metabolism,0.57,-0.114
+Hypertension,0.67,-0.144
