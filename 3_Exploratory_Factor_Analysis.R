@@ -137,16 +137,18 @@ for (strata in 1:nrow(stratum)) {
           cor = "tet", main = paste0(prevalenceProportion, "% ", gsub("cols", "", t),": Parallel Analysis Scree Plot")
         )))
       
-      png(filename = paste0(pathStratum, "/Scree_plot_", strataLabel ,".png"), width = 700, height = 500)
+      png(filename = paste0(pathStratum, "/Scree_plot_",prevalenceProportion, "_", strataLabel ,".png"), width = 700, height = 500)
       plot(nFactors, main = paste0(gsub("cols", "", t), " Prev ", prevalenceProportion, "% ", strataLabel,":\nParallel Analysis Scree Plot"))
       dev.off()
       
-      # TODO perform analysis only for the half of optimal factors if no simple solutions are desired
+      # If we wanted simple solutions modified nMaxFactors to contain all solutions
       nMaxFactors <- nFactors$nfact
       
       if(nMaxFactors <= 2){
         warning("Optimal estimated factors less or equal 2. Check data!")
         nMaxFactors <- 3
+      }else{
+        nMaxFactors <- ceiling(nMaxFactors/2)
       }
       
       # @param rotate - method to rotate the data for factoring. Take into account:
@@ -175,7 +177,7 @@ for (strata in 1:nrow(stratum)) {
       
     }
     
-    
+    # Create tile plots of the relevant factor results:
     files <- list.files(path = pathEfa, pattern = paste0(prevalenceProportion,"%.*\\.csv$"))  
     
     for(resultFile in files){

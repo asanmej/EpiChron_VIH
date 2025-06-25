@@ -1,5 +1,4 @@
-output/*.txt
-output/*.html
+output/*
 comments/*
 cohorte/*
 control/*
