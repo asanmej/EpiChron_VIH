@@ -137,7 +137,7 @@ for (strata in 1:nrow(stratum)) {
           cor = "tet", main = paste0(prevalenceProportion, "% ", gsub("cols", "", t),": Parallel Analysis Scree Plot")
         )))
       
-      png(filename = paste0(pathStratum, "/Scree_plot_",prevalenceProportion, "_", strataLabel ,".png"), width = 700, height = 500)
+      png(filename = paste0(pathEfaPic, "/Scree_plot_", gsub("cols", "", t), "_", prevalenceProportion, "_", strataLabel ,".png"), width = 700, height = 500)
       plot(nFactors, main = paste0(gsub("cols", "", t), " Prev ", prevalenceProportion, "% ", strataLabel,":\nParallel Analysis Scree Plot"))
       dev.off()
       
@@ -148,7 +148,7 @@ for (strata in 1:nrow(stratum)) {
         warning("Optimal estimated factors less or equal 2. Check data!")
         nMaxFactors <- 3
       }else{
-        nMaxFactors <- ceiling(nMaxFactors/2)
+        nMaxFactors <- ceiling(nMaxFactors/2)+2
       }
       
       # @param rotate - method to rotate the data for factoring. Take into account:
