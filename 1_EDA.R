@@ -33,7 +33,9 @@ bdu[, (cols) := lapply(.SD, as.Date), .SDcols = cols]
 cols <- grep("zbs_tipo|sexo",colnames(bdu), value = T)
 bdu[, (cols) := lapply(.SD, as.factor), .SDcols = cols]
 
-bdu[, tsi := factor(tsi, levels = c("< 18000", "entre 18000 y 100000", "> 100000", "Farmacia gratuita", "Mutualistas", "No asegurados"))]
+bdu[, tsi := factor(tsi, levels =  c("< 18000", "entre 18000 y 100000", "> 100000", "Farmacia gratuita", "Mutualistas", "No asegurados"), labels = c("< 18000 €/year ", "between 18000 to 100000 €/year", "> 100000 €/year", "Free medication", "Mutualist", "No health coverage"))]
+
+bdu[, ageband := cut(edad, c(-Inf,44,65,Inf), labels = c("< 45 years", "45 - 65 years" , "> 65 years"))]
 
 setcolorder(diag_bool_prev, c("patient_id", "vih_dt", "HIV_infection"))
 setcolorder(diag_bool_inc, c("patient_id", "vih_dt", "HIV_infection"))
@@ -58,7 +60,7 @@ descriptiveAnalysis <- function(diag, label) {
     select(vih_bool,
            # nacimiento_dt,
            sexo,
-           edad,
+           ageband,
            muerte,
            MM_inc,
            zbs_tipo,
@@ -67,12 +69,12 @@ descriptiveAnalysis <- function(diag, label) {
            indice_privación) %>%
     mutate(
       vih_bool = ifelse(vih_bool == T, "VIH+", "Control"),
-      sexo = ifelse(sexo == "HOMBRE", "H", "M")
+      sexo = ifelse(sexo == "HOMBRE", "Men", "Women")
     ) %>%
     gtsummary::tbl_summary(
       by = vih_bool,
       label = list(
-        edad ~ "Age (years)",
+        ageband ~ "Ageband (years)",
         # nacimiento_dt ~ "Birth date",
         sexo ~ "Sex",
         muerte ~ "Death",
@@ -82,17 +84,17 @@ descriptiveAnalysis <- function(diag, label) {
         tsi ~ "TSI",
         indice_privación ~ "Deprivation Index"
       ),
-      statistic = list(all_continuous() ~ "{mean} ({sd}) | {median} ({p25}, {p75})"),
+      statistic = list(all_continuous() ~ "{mean} ({sd})"),
       missing = "no"
     ) %>%
-    add_p(test = indice_privación ~ "t.test", ) %>%
+    add_p(test = indice_privación ~ "t.test") %>%
     bold_labels() %>%
     bold_p() %>%
     as_gt() %>% gt::gtsave(path = paste0("output/", format(Sys.Date(),"%Y%m%d")),
                            filename = paste0("Demographic_", label, ".html"))
 }
 
-descriptiveAnalysis(diag = bdu[incidente == T], label = "inc")
+# descriptiveAnalysis(diag = bdu[incidente == T], label = "inc")
 descriptiveAnalysis(bdu[prevalente == T], "prev" )
 
 # Top 20 prevalent diseases:
