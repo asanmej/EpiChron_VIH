@@ -156,60 +156,72 @@ for (s in c("HOMBRE", "MUJER")){
   }
 }
 
-# TODO ageband stratification
-##### Modelling stratified by sex and agebands: ####
-bdu <- fread("intermediate/bdu_full.csv")
-diag_bool_prev <- fread("intermediate/diagnosis_bool_prevalent_final.csv")
-diag_bool_inc <- fread("intermediate/diagnosis_bool_incident_final.csv")
 
-diag_bool_prev <- merge(diag_bool_prev, bdu[, .(patient_id, edad, sexo)], by = "patient_id")
-diag_bool_inc <- merge(diag_bool_inc, bdu[, .(patient_id, edad, sexo)], by = "patient_id")
-# TODO convert age into a factor
+##### Modelling stratified by sex and agebands: ####
+bdu <- fread("intermediate/bdu_full.csv", encoding = "UTF-8")
+diag_bool_prev <- fread("intermediate/diagnosis_bool_prevalent_final.csv", encoding = "UTF-8")
+# diag_bool_inc <- fread("intermediate/diagnosis_bool_incident_final.csv")
+
+diag_bool_prev <- merge(diag_bool_prev, bdu[, .(patient_id, edad, sexo, tsi, nacionalidad)], by = "patient_id")
+# diag_bool_inc <- merge(diag_bool_inc, bdu[, .(patient_id, edad, sexo)], by = "patient_id")
+
 age_cuts <- c(-Inf,44,65, Inf)
 age_labels <- c("<45", "45-65", ">65")
 diag_bool_prev[, agebands := cut(edad, age_cuts, labels = age_labels)]
-diag_bool_inc[, agebands := cut(edad, age_cuts, labels = age_labels)]
+# diag_bool_inc[, agebands := cut(edad, age_cuts, labels = age_labels)]
 diag_bool_prev[, edad := NULL]
-diag_bool_inc[, edad := NULL]
-setcolorder(diag_bool_prev, c("patient_id", "vih_dt", "HIV_infection", "sexo", "agebands"))
-setcolorder(diag_bool_inc, c("patient_id", "vih_dt", "HIV_infection", "sexo", "agebands"))
-setkey(diag_bool_inc, NULL)
+# diag_bool_inc[, edad := NULL]
+setcolorder(diag_bool_prev, c("patient_id", "vih_dt", "HIV_infection", "sexo", "agebands", "tsi", "nacionalidad"))
+diag_bool_prev[, nacionalidad := ifelse(nacionalidad == "ESPAÑA", "España", "Extranjero")]
+diag_bool_prev[, nacionalidad := as.factor(nacionalidad)]
+diag_bool_prev[, HIV_infection := as.factor(HIV_infection)]
+diag_bool_prev[, tsi := factor(tsi, levels = c("< 18000", "entre 18000 y 100000", "> 100000", "Farmacia gratuita", "No asegurados", "Mutualistas"))]
+# setcolorder(diag_bool_inc, c("patient_id", "vih_dt", "HIV_infection", "sexo", "agebands"))
+# setkey(diag_bool_inc, NULL)
 setkey(diag_bool_prev, NULL)
 
 
 for (s in c("HOMBRE", "MUJER")){
-  for (l in c("diag_bool_prev", "diag_bool_inc")) {
+  for (l in c("diag_bool_prev"
+              # , "diag_bool_inc"
+              )) {
     for (age_label in age_labels) {
       results <- data.table()
-      for (i in 6:length(colnames(get(l)))) {
-        tryCatch(t <- glm(formula = as.formula(paste0("`",colnames(get(l))[i],"`","~`HIV_infection`")), family = "binomial", data = get(l)[sexo == s & agebands == age_label]),
-                 warning = function(w){message(paste0("no convergence at ", l," ", s, " ", colnames(get(l))[i]))}
+      for (i in 8:length(colnames(get(l)))) {
+        tryCatch(expr = {
+          
+          t <- glm(formula = as.formula(paste0("`",colnames(get(l))[i],"`","~`HIV_infection` + nacionalidad + tsi")), family = "binomial", data = get(l)[sexo == s & agebands == age_label])
+          
+          cols <- c(colnames(get(l))[i], "HIV_infection")
+          r <- data.table(ccs_epichron_label = colnames(get(l))[i],
+                          n_positive_total = table(get(l)[sexo == s & agebands == age_label, ..i])[2],
+                          n_positive_ctl = ifelse(length(get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 1 & get(cols[2]) == 0, N]) == 0, 
+                                                  yes = 0, 
+                                                  no = get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 1 & get(cols[2]) == 0, N]),
+                          n_positive_hiv = ifelse(length(get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 1 & get(cols[2]) == 1, N]) == 0, 
+                                                  yes = 0, 
+                                                  no = get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 1 & get(cols[2]) == 1, N]),
+                          n_negative_total = table(get(l)[sexo == s & agebands == age_label, ..i])[1],
+                          n_negative_ctl = ifelse(length(get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 0 & get(cols[2]) == 0, N]) == 0, 
+                                                  yes = 0, 
+                                                  no = get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 0 & get(cols[2]) == 0, N]),
+                          n_negative_hiv = ifelse(length(get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 0 & get(cols[2]) == 1, N]) == 0, 
+                                                  yes = 0, 
+                                                  no = get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 0 & get(cols[2]) == 1, N]),
+                          # Odd ratio of the variable without intercept
+                          OR = exp(coef(t))["HIV_infection1"],
+                          # Confidence interval by Wald method
+                          lb = ifelse(as.data.frame(exp(confint.default(t)))["2.5 %"]["HIV_infection1",] == Inf, NA, as.data.frame(exp(confint.default(t)))["2.5 %"]["HIV_infection1",]),
+                          ub = ifelse(as.data.frame(exp(confint.default(t)))["97.5 %"]["HIV_infection1",] == Inf, NA, as.data.frame(exp(confint.default(t)))["97.5 %"]["HIV_infection1",]),
+                          p_value = as.data.frame(summary(t)$coefficient)["Pr(>|z|)"]["HIV_infection1",]
+          )
+          r[is.na(ub) | is.na(lb), OR := NA]
+          results <- rbind(results, r)
+          
+          },warning = function(w){message(paste0("no convergence at ", l," ", s, " ", colnames(get(l))[i]))}
         )
-        cols <- c(colnames(get(l))[i], "HIV_infection")
-        r <- data.table(ccs_epichron_label = colnames(get(l))[i],
-                        n_positive_total = table(get(l)[sexo == s & agebands == age_label, ..i])[2],
-                        n_positive_ctl = ifelse(length(get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 1 & get(cols[2]) == 0, N]) == 0, 
-                                                yes = 0, 
-                                                no = get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 1 & get(cols[2]) == 0, N]),
-                        n_positive_hiv = ifelse(length(get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 1 & get(cols[2]) == 1, N]) == 0, 
-                                                yes = 0, 
-                                                no = get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 1 & get(cols[2]) == 1, N]),
-                        n_negative_total = table(get(l)[sexo == s & agebands == age_label, ..i])[1],
-                        n_negative_ctl = ifelse(length(get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 0 & get(cols[2]) == 0, N]) == 0, 
-                                                yes = 0, 
-                                                no = get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 0 & get(cols[2]) == 0, N]),
-                        n_negative_hiv = ifelse(length(get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 0 & get(cols[2]) == 1, N]) == 0, 
-                                                yes = 0, 
-                                                no = get(l)[sexo == s & agebands == age_label, ..cols][, .N, by = cols][get(cols[1]) == 0 & get(cols[2]) == 1, N]),
-                        # Odd ratio of the variable without intercept
-                        OR = exp(coef(t))["HIV_infection"],
-                        # Confidence interval by Wald method
-                        lb = ifelse(as.data.frame(exp(confint.default(t)))["2.5 %"]["HIV_infection",] == Inf, NA, as.data.frame(exp(confint.default(t)))["2.5 %"]["HIV_infection",]),
-                        ub = ifelse(as.data.frame(exp(confint.default(t)))["97.5 %"]["HIV_infection",] == Inf, NA, as.data.frame(exp(confint.default(t)))["97.5 %"]["HIV_infection",]),
-                        p_value = as.data.frame(summary(t)$coefficient)["Pr(>|z|)"]["HIV_infection",]
-        )
-        r[is.na(ub) | is.na(lb), OR := NA]
-        results <- rbind(results, r)
+
+        rm(t)
       }
       # Remove empty row, round results and mark p values < 0.05:
       results <- results[!is.na(ccs_epichron_label)]
