@@ -36,7 +36,7 @@ bdu[, ageband := cut(edad, c(-Inf,44,65,Inf), labels = c("under 45", "45 to 65" 
 stratum <- setDT(expand.grid(sexo = c("HOMBRE", "MUJER"), edad = c("under 45", "45 to 65" , "over 65")))
 stratum <- rbind(stratum, list("Global", NA))
 
-prevalenceProportionVec <- 2:3
+prevalenceProportionVec <- 2
 correlationKmo <- 0.5
 
 # Create output path:
@@ -128,17 +128,17 @@ for (strata in 1:nrow(stratum)) {
       # @param fa - fa = show eigen values for principal axis factor analysis.
       # @param cor - which correlation should be calculated, in our case tetrachoric (binary data).
       
+      png(filename = paste0(pathEfaPic, "/Scree_plot_", gsub("cols", "", t), "_", prevalenceProportion, "_", strataLabel ,".png"), width = 700, height = 500)
       
-      nFactors <-
-        suppressMessages(suppressWarnings(fa.parallel(
+      nFactors <- suppressMessages(suppressWarnings(fa.parallel(
           x = diagSub[HIV_infection == i, ..cols],
           fm = "ml",
           fa = "fa",
-          cor = "tet", main = paste0(prevalenceProportion, "% ", gsub("cols", "", t),": Parallel Analysis Scree Plot")
+          cor = "tet", 
+          main = paste0(gsub("cols", "", t), " Prev ", prevalenceProportion, "% ", strataLabel,":\nParallel Analysis Scree Plot"),
+          plot = T
         )))
-      
-      png(filename = paste0(pathEfaPic, "/Scree_plot_", gsub("cols", "", t), "_", prevalenceProportion, "_", strataLabel ,".png"), width = 700, height = 500)
-      plot(nFactors, main = paste0(gsub("cols", "", t), " Prev ", prevalenceProportion, "% ", strataLabel,":\nParallel Analysis Scree Plot"))
+        
       dev.off()
       
       # If we wanted simple solutions modified nMaxFactors to contain all solutions
@@ -185,7 +185,7 @@ for (strata in 1:nrow(stratum)) {
       setorder(t, V1)
       t[, V1 := factor(x = V1, levels = rev(V1))] # Invert factor level for alphabetical 
       temp <- melt(data = t, id.vars = "V1")
-      temp[abs(value) < 0.3 , value := NA]
+      # temp[abs(value) < 0.3 , value := NA] # Comment if all disease loading needed to be seen in the images
       temp[, text := paste0("y: ", V1, "\n", "x: ", variable, "\n", "Value: ", value)]
       
       p <- ggplot(temp, aes(x = variable, y = V1, fill = value, text = text)) + 
