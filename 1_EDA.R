@@ -113,30 +113,35 @@ top20 <- data.table(
 )
 
 setnames(top20, c("n_positive.V1", "n_positive.V2", "p_value.V1"), c("n_positive_ctl", "n_positive_vih", "p_value"))
+
+top20[, p_value_adjusted := round(p.adjust(p_value, method = "bonferroni"), 3)]
 top20[, prop_vih := round(n_positive_vih/N_total_vih*100, 2)]
 top20[, prop_ctl := round(n_positive_ctl/N_total_ctl*100, 2)]
+top20[, diff := round(abs(prop_vih- prop_ctl), 3)]
+top20[, sign := ifelse((prop_vih - prop_ctl) >= 0, 1, -1)]
 setcolorder(top20, c("ccs", grep("vih$", colnames(top20), value = T), grep("ctl$", colnames(top20), value = T)))
 setorder(top20, -prop_vih)
 fwrite(top20, paste0("output/", format(Sys.Date(),"%Y%m%d"),"/Tabla_prevalencias_ranking.csv"))
 
 # Top 20 incident diseases:
-cols <- colnames(diag_bool_inc)
-cols <- cols[-c(1:3)]
-cols <- cols[!unlist(diag_bool_inc[, lapply(.SD, function(x){sum(x) == 0}), .SDcols = cols, by = HIV_infection][, lapply(.SD, any), .SDcols = cols])]
-cols <- c("HIV_infection", cols)
-diag_bool_inc <- diag_bool_inc[, ..cols]
-
-top20 <- data.table(
-  ccs = cols,
-  n_positive = t(diag_bool_inc[, lapply(.SD, sum), .SDcols = cols, by = "`HIV_infection`"][,-1]),
-  N_total_vih = table(diag_bool_inc$HIV_infection)[2],
-  N_total_ctl = table(diag_bool_inc$HIV_infection)[1],
-  p_value = t(diag_bool_inc[, lapply(.SD, function(x) round(chisq.test(x, diag_bool_inc$HIV_infection)$p.value, 4)), .SDcols = cols])
-)
-
-setnames(top20, c("n_positive.V1", "n_positive.V2", "p_value.V1"), c("n_positive_ctl", "n_positive_vih", "p_value"))
-top20[, prop_vih := round(n_positive_vih/N_total_vih*100, 2)]
-top20[, prop_ctl := round(n_positive_ctl/N_total_ctl*100, 2)]
-setcolorder(top20, c("ccs", grep("vih$", colnames(top20), value = T), grep("ctl$", colnames(top20), value = T)))
-setorder(top20, -prop_vih)
-fwrite(top20, paste0("output/", format(Sys.Date(),"%Y%m%d"),"/Tabla_incident_ranking.csv"))
+# cols <- colnames(diag_bool_inc)
+# cols <- cols[-c(1:3)]
+# cols <- cols[!unlist(diag_bool_inc[, lapply(.SD, function(x){sum(x) == 0}), .SDcols = cols, by = HIV_infection][, lapply(.SD, any), .SDcols = cols])]
+# cols <- c("HIV_infection", cols)
+# diag_bool_inc <- diag_bool_inc[, ..cols]
+# 
+# top20 <- data.table(
+#   ccs = cols,
+#   n_positive = t(diag_bool_inc[, lapply(.SD, sum), .SDcols = cols, by = "`HIV_infection`"][,-1]),
+#   N_total_vih = table(diag_bool_inc$HIV_infection)[2],
+#   N_total_ctl = table(diag_bool_inc$HIV_infection)[1],
+#   p_value = t(diag_bool_inc[, lapply(.SD, function(x) round(chisq.test(x, diag_bool_inc$HIV_infection)$p.value, 4)), .SDcols = cols])
+# )
+# 
+# 
+# setnames(top20, c("n_positive.V1", "n_positive.V2", "p_value.V1"), c("n_positive_ctl", "n_positive_vih", "p_value"))
+# top20[, prop_vih := round(n_positive_vih/N_total_vih*100, 2)]
+# top20[, prop_ctl := round(n_positive_ctl/N_total_ctl*100, 2)]
+# setcolorder(top20, c("ccs", grep("vih$", colnames(top20), value = T), grep("ctl$", colnames(top20), value = T)))
+# setorder(top20, -prop_vih)
+# fwrite(top20, paste0("output/", format(Sys.Date(),"%Y%m%d"),"/Tabla_incident_ranking.csv"))
