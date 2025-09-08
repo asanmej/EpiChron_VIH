@@ -98,10 +98,9 @@ for (i in 1:nrow(stratum)) {
                                                       conf_lower = NA,
                                                       conf_upper = NA)]
   
-  results[, OR := as.character(OR)][is.na(OR), OR := "No convergence"]
-  
   results[, p_05 := p_value < 0.05]
-  
+  results[, p_05 := as.character(p_05)][is.na(p_05), p_05 := "No convergence"]
+    
   fwrite(results, paste0(result_path,"/clogit_full_", stratum[i, sexo], "_", gsub("<|>| ", "" , stratum[i, edad]), "_", format(Sys.Date(), "%Y%m%d"), ".csv"))
   
 }
