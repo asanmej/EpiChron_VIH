@@ -37,6 +37,8 @@ bdu[, tsi := factor(tsi, levels =  c("< 18000", "entre 18000 y 100000", "> 10000
 
 bdu[, ageband := cut(edad, c(-Inf,44,65,Inf), labels = c("< 45 years", "45 - 65 years" , "> 65 years"))]
 
+setnames(bdu, "indice_privación", "indice_privacion")
+
 setcolorder(diag_bool_prev, c("patient_id", "vih_dt", "HIV_infection"))
 setcolorder(diag_bool_inc, c("patient_id", "vih_dt", "HIV_infection"))
 
@@ -55,6 +57,8 @@ bdu[, muerte := ifelse(causa_baja == "FALLECIMIENTO", T, F)]
 
 # Descriptive sociodemographic tables:
 # To reduce code lines create a function, tweak the function to the needs.
+theme_gtsummary_language("en", big.mark = "'")
+
 descriptiveAnalysis <- function(diag, label) {
   diag %>%
     select(vih_bool,
@@ -66,7 +70,7 @@ descriptiveAnalysis <- function(diag, label) {
            zbs_tipo,
            nacionalidad,
            tsi,
-           indice_privación) %>%
+           indice_privacion) %>%
     mutate(
       vih_bool = ifelse(vih_bool == T, "VIH+", "Control"),
       sexo = ifelse(sexo == "HOMBRE", "Men", "Women")
@@ -74,20 +78,20 @@ descriptiveAnalysis <- function(diag, label) {
     gtsummary::tbl_summary(
       by = vih_bool,
       label = list(
-        ageband ~ "Ageband (years)",
+        ageband ~ "Ageband",
         # nacimiento_dt ~ "Birth date",
         sexo ~ "Sex",
         muerte ~ "Death",
         MM_inc ~ "Multimorbidity burden",
-        zbs_tipo ~ "ZBS",
+        zbs_tipo ~ "Living area",
         nacionalidad ~ "Nacionality",
-        tsi ~ "TSI",
-        indice_privación ~ "Deprivation Index"
+        tsi ~ "Copayment category",
+        indice_privacion ~ "Deprivation Index"
       ),
       statistic = list(all_continuous() ~ "{mean} ({sd})"),
       missing = "no"
     ) %>%
-    add_p(test = indice_privación ~ "t.test") %>%
+    add_p(test = indice_privacion ~ "t.test") %>%
     bold_labels() %>%
     bold_p() %>%
     as_gt() %>% gt::gtsave(path = paste0("output/", format(Sys.Date(),"%Y%m%d")),
