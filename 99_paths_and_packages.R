@@ -8,6 +8,9 @@ library(psych) # Required for EFA
 library(GPArotation) # Required for factor rotations
 library(plotly)
 library(htmlwidgets)
+library(survival) # Require for survival analysis
+library(ggsurvfit) # Require for the survival plots
+library(survminer)
 
 setwd("C:/Santos/vih_Datos8")
 options(scipen = 999)
