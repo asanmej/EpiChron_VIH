@@ -3,6 +3,7 @@ Script files are named in the sequencial order they have been run. Folder `ccs_r
 
 # Contact
 
-For any questions, issues, or inquiries regarding this repository, please contact: **A. Santos Mejías** - asantosm@ext.aragon.es
+For any questions, issues, or inquiries regarding this repository, please contact: 
+- **A. Santos Mejías** - asantosm@ext.aragon.es
 
 [^1]: https://hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp
